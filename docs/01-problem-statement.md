@@ -1,5 +1,7 @@
 # Problem statement
 
+**English · [Deutsch](01-problem-statement.de.md) · [Українська](01-problem-statement.uk.md)**
+
 > Paraphrased in my own words from a take-home brief. The original verbatim text and any
 > identifying details are intentionally omitted.
 

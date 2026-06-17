@@ -1,5 +1,7 @@
 # Real Estate Cold-Call Trainer (Telegram voice bot)
 
+**English · [Deutsch](README.de.md) · [Українська](README.uk.md)**
+
 A voice-based Telegram bot that **role-plays a property owner** so call-center agents can
 practice real-estate cold calls. The agent calls in with voice messages; the bot answers
 in voice as a reluctant owner — raising realistic objections, resisting, and (sometimes)
