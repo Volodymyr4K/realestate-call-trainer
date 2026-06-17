@@ -1,0 +1,23 @@
+# Секрети — НІКОЛИ не комітимо
+.env
+.env.local
+
+# Особисте (інструкції Claude, не частина продукту)
+CLAUDE.md
+
+# Дані розмов (аудіо + база + згенеровані звіти) — приватне
+*.sqlite
+*.sqlite3
+data/
+recordings/
+stt_review.html
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Кеш моделей
+*.pt

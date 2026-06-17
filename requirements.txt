@@ -1,0 +1,19 @@
+# Telegram-бот
+aiogram>=3.13,<4
+
+# STT: голос -> текст (faster-whisper швидший за звичайний whisper на CPU)
+faster-whisper>=1.0
+
+# LLM: OpenRouter (OpenAI-сумісний API)
+openai>=1.40
+
+# TTS: текст -> голос (Silero працює через torch)
+torch>=2.2
+numpy>=1.24
+omegaconf>=2.3  # прихована залежність Silero
+
+# Конфіг (.env)
+python-dotenv>=1.0
+
+# Тести (dev)
+pytest>=8.0
