@@ -26,8 +26,8 @@ Der Auftraggeber fordert im Lastenheft **ausdrücklich Dokumentation**, nicht nu
    Skalierung, Integration ins bestehende System. ← **Pflicht, er hat das explizit genannt**
 2. **Funktionierender Demo-Bot** — starker Bonus, der die Leistungsfähigkeit beweist.
 
-⚠️ Dieses Dokument (`02-architecture.md`) ist technisch, für UNS. Die Reinversion für den Eigentümer
-wird separat erstellt (Phase 3–4), nicht verwechseln.
+⚠️ Dieses Dokument (`02-architecture.md`) ist technisch, für UNS. Die saubere Fassung für den
+Eigentümer wird separat erstellt (Phase 3–4), nicht verwechseln.
 
 ---
 
@@ -167,7 +167,7 @@ Keine verschiedenen Modelle/Bots — Parameter einer Persona, die **Nachgiebigke
 **LLM-as-judge:** ein separater Aufruf erhält das Transkript + **Rubrik** und gibt
 einen strukturierten Bericht zurück. 8 Kriterien aus dem Lastenheft:
 1. Qualität des Einstiegs 2. Bedarfsermittlung 3. Qualität der Fragen 4. Einwandbehandlung
-5. Vertrauensniveau 6. Terminierungsversuch 7. Verhandlungskompetenzen
+5. Vertrauensniveau 6. Terminversuch 7. Verhandlungskompetenzen
 8. Gesamtergebnis in % + Stärken + Empfehlungen.
 
 **Gesamtergebnis %:** jedes Kriterium 0–100, zusammen — **gewichteter Durchschnitt** (Gewichte in der Konfiguration;
