@@ -105,5 +105,5 @@ docs/        ursprüngliche Aufgabenstellung + Architektur & Entscheidungen
 - **Aufnahmen werden unbegrenzt aufbewahrt** (bewusst, zur Archivierung) — produktiv braucht
   es eine Aufbewahrungsrichtlinie.
 
-Siehe [`docs/02-architecture.md`](docs/02-architecture.md) (auf Ukrainisch) für das vollständige
-Design, Entscheidungen, Kosten, Skalierung und Validierungsergebnisse.
+Siehe [`docs/02-architecture.de.md`](docs/02-architecture.de.md) für das vollständige Design,
+Entscheidungen, Kosten, Skalierung und Validierungsergebnisse.

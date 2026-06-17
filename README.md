@@ -99,5 +99,5 @@ docs/        original brief + architecture & decisions
 - **Single process** — concurrent users are serialized; production would use a worker pool + queue.
 - **Recordings are kept indefinitely** (by design, for archival) — production needs a retention policy.
 
-See [`docs/02-architecture.md`](docs/02-architecture.md) for the full design, decisions, cost,
-scaling, and validation results.
+See [`docs/02-architecture.en.md`](docs/02-architecture.en.md) for the full design, decisions,
+cost, scaling, and validation results.
