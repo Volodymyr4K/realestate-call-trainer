@@ -4,11 +4,11 @@
 
 Ein sprachbasierter Telegram-Bot, der die **Rolle eines Immobilieneigentümers** spielt,
 damit Callcenter-Mitarbeiter Kaltakquise-Telefonate üben können. Der Mitarbeiter ruft per
-Sprachnachricht an; der Bot antwortet als zurückhaltender Eigentümer mit Stimme — bringt
+Sprachnachricht an; der Bot antwortet als zurückhaltender Eigentümer per Sprachnachricht — bringt
 realistische Einwände, leistet Widerstand und stimmt (manchmal) einem Termin zu. Nach dem
 Gespräch erstellt er einen **bewerteten Coaching-Bericht**.
 
-> Als Probeaufgabe entwickelt. Der Dialog läuft auf Russisch (Sprache des Ziel-Callcenters);
+> Als Probeaufgabe entwickelt. Der Dialog läuft auf Russisch (Sprache des Ziel-Callcenters).
 > Die Bot-Oberfläche ist auf Ukrainisch; die Doku liegt auf Englisch, Ukrainisch und Deutsch vor.
 
 ## Funktionen
@@ -16,7 +16,7 @@ Gespräch erstellt er einen **bewerteten Coaching-Bericht**.
 - **13 Einwand-Szenarien** (will nicht mit einer Agentur arbeiten, verkauft selbst, Provision
   zu hoch, schlechte Erfahrung, kein Vertrauen, „erst mit der Familie besprechen" usw.).
 - **4 Schwierigkeitsstufen** — von einem freundlichen Eigentümer, der nach einem Einwand
-  nachgibt, bis zu einem kalten, abweisenden, der sich kaum einlässt. Der Schwierigkeits-
+  nachgibt, bis zu einem kalten, abweisenden Eigentümer, der sich kaum einlässt. Der Schwierigkeits-
   verlauf ist **empirisch validiert** (hält auch gegen einen adaptiven LLM-„Manager", nicht
   nur gegen ein festes Skript).
 - **Sprache-zu-Sprache** über Telegram-Sprachnachrichten: Sprache → Text → Dialog → Sprache.
@@ -100,10 +100,10 @@ docs/        Aufgabenstellung + Architektur & Entscheidungen
   ein Modulwechsel.
 - **Bewertungen sind konsistent, aber nicht experten-kalibriert** — nützlich als Trainings-
   Feedback, keine zertifizierte Bewertung.
-- **Ein Prozess** — gleichzeitige Nutzer werden serialisiert; produktiv bräuchte es einen
-  Worker-Pool + Warteschlange.
-- **Aufnahmen werden unbegrenzt aufbewahrt** (bewusst, zur Archivierung) — produktiv braucht
-  es eine Aufbewahrungsrichtlinie.
+- **Ein Prozess** — gleichzeitige Nutzer werden serialisiert; im Produktivbetrieb bräuchte es
+  einen Worker-Pool + Warteschlange.
+- **Aufnahmen werden unbegrenzt aufbewahrt** (bewusst, zur Archivierung) — im Produktivbetrieb
+  braucht es eine Aufbewahrungsrichtlinie.
 
 Siehe [`docs/02-architecture.de.md`](docs/02-architecture.de.md) für das vollständige Design,
 Entscheidungen, Kosten, Skalierung und Validierungsergebnisse.

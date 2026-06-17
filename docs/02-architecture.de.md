@@ -24,7 +24,7 @@ Der Auftraggeber fordert im Lastenheft **ausdrücklich Dokumentation**, nicht nu
 1. **Vorschlagsdokument für den Eigentümer** (Russisch/Ukrainisch, in einfacher Sprache) zu seinen 6 Punkten:
    welche AI-Modelle, welche Dienste/Integrationen, Architekturschema, ungefähre Betriebskosten,
    Skalierung, Integration ins bestehende System. ← **Pflicht, er hat das explizit genannt**
-2. **Funktionierender Demo-Bot** — starkes Bonus, das die Leistungsfähigkeit beweist.
+2. **Funktionierender Demo-Bot** — starker Bonus, der die Leistungsfähigkeit beweist.
 
 ⚠️ Dieses Dokument (`02-architecture.md`) ist technisch, für UNS. Die Reinversion für den Eigentümer
 wird separat erstellt (Phase 3–4), nicht verwechseln.
@@ -109,14 +109,14 @@ Mitarbeiter (Telegram)
   ┌─────────────────────────────────────────────┐
   │  Dialog-Engine (LLM, Anbieter AUSTAUSCHBAR)  │
   │   • Persona + Szenario (1 von 13)             │
-  │   • Schwierigkeitsgrad (1–4) steuert Nachgiebigkeit │
+  │   • Schwierigkeitsgrad (1–4) → Nachgiebigkeit │
   │   • Dialoggedächtnis (Gesprächsverlauf)       │
   └─────────────────────────────────────────────┘
         │ Text-Antwort des Eigentümers
         ▼
   ┌─────────────────────────┐
   │  TTS (Silero) → WAV     │
-  │  → ffmpeg → OGG/OPUS    │   damit es als Sprach-«Kreis» ankommt
+  │  → ffmpeg → OGG/OPUS    │   damit es als echte Sprachnachricht ankommt
   └─────────────────────────┘
         │ sendVoice
         ▼
@@ -134,15 +134,15 @@ Mitarbeiter (Telegram)
 |-----|------------------------|-------------------|
 | Bot | `aiogram` (Python 3.12) | dasselbe |
 | STT | `faster-whisper`, `small`/`medium` (lokal) | Whisper API / Deepgram |
-| Dialog LLM | **`openai/gpt-4o-mini` über OpenRouter** — gewählt durch Vergleich von 6 Modellen (Qualität×Preis×Zuverlässigkeit, $1/1000 Gespräche). Anbieter AUSTAUSCHBAR | beliebiges Modell OpenRouter (Claude/Gemini/…) |
+| Dialog LLM | **`openai/gpt-4o-mini` über OpenRouter** — gewählt durch Vergleich von 6 Modellen (Qualität×Preis×Zuverlässigkeit, $1/1000 Gespräche). Anbieter AUSTAUSCHBAR | beliebiges Modell auf OpenRouter (Claude/Gemini/…) |
 | Richter (Bewertung) | dasselbe gpt-4o-mini (bewertet den MENSCHEN, nicht sich selbst) | stärkeres Modell bei Bedarf |
 | TTS | `Silero` (kostenlos, CPU) → Konvertierung in OGG/OPUS über ffmpeg | ElevenLabs / OpenAI TTS |
 | Speicher | **SQLite** + lokale Audiodateien + STT-Log (`stt_log`) | Postgres + S3/MinIO |
 | Echtzeit (opt.) | — | OpenAI Realtime API + LiveKit/WebRTC |
 
 **Weg:** wir starteten lokal (Ollama, qwen/llama — null Kosten), aber lokale 8B-Modelle
-widersprachen sich bei schwierigen Graden → Wechsel zu **OpenRouter / gpt-4o-mini**. Der Tausch kostete
-**eine Datei** (`bot/llm.py`) — Beweis, dass die Anbieterschicht wirklich austauschbar ist.
+widersprachen sich bei schwierigen Graden → Wechsel zu **OpenRouter / gpt-4o-mini**. Dieser Austausch
+betraf nur **eine Datei** (`bot/llm.py`) — Beweis, dass die Anbieterschicht wirklich austauschbar ist.
 **Prinzip:** STT / LLM / TTS — hinter einer Abstraktion, der Anbieter wird punktuell gewechselt, ohne Umschreiben.
 
 ---
@@ -215,9 +215,9 @@ Einrichtung: `cp .env.example .env`, `BOT_TOKEN` (von @BotFather) und
 | STT (faster-whisper lokal) | ~0 |
 | TTS (Silero lokal) | ~0 |
 
-Das Demo kostet also **Cent-Beträge**. Der Hauptkostenfaktor bei großem Volumen — LLM (noch günstiger
-möglich — mistral, gemini-flash). Falls Stimme auf ElevenLabs/OpenAI TTS gehoben wird — kommt
-Vertonungskosten hinzu (ebenfalls Kleinstbeträge pro Gespräch).
+Die Demo kostet also **Cent-Beträge**. Der Hauptkostenfaktor bei großem Volumen ist das LLM (noch
+günstiger möglich — mistral, gemini-flash). Falls die Stimme auf ElevenLabs/OpenAI TTS gehoben
+wird, kommen Vertonungskosten hinzu (ebenfalls Kleinstbeträge pro Gespräch).
 
 ---
 
@@ -253,7 +253,7 @@ von STT/TTS/LLM. Lokaler Stack trägt viele Nutzer nicht (eine Hardware) → fü
 | 4 | Realismus-Politur + **Vorschlagsdokument für den Eigentümer** (Deliverable Nr. 1) | iterativ |
 | 5 | (Opt.) Echtzeit über Mini App / WebRTC | Wochen |
 
-**Ziel der Testaufgabe:** solides Demo der Phasen 1–3 (1–2 Szenarien, 2 Grade, vollständiger Zyklus
+**Ziel der Testaufgabe:** solide Demo der Phasen 1–3 (1–2 Szenarien, 2 Grade, vollständiger Zyklus
 Sprache→Dialog→Bericht) + Vorschlagsdokument für den Eigentümer.
 
 ---
