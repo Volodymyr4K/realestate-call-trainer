@@ -8,7 +8,7 @@
 A real-estate agency wants to train its call-center agents on cold calls to property owners.
 The goal is a voice bot (in Telegram) that plays the role of a property owner and holds a
 realistic conversation with an agent, reproducing the objections, doubts, and refusals that
-are common on the real-estate market.
+are common in the real-estate market.
 
 ## Goal
 

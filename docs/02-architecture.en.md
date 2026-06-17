@@ -117,7 +117,7 @@ Agent (Telegram)
         ▼
   ┌─────────────────────────┐
   │  TTS (Silero) → WAV     │
-  │  → ffmpeg → OGG/OPUS    │   so it arrives as a voice "circle"
+  │  → ffmpeg → OGG/OPUS    │   so it's sent as a real voice message
   └─────────────────────────┘
         │ sendVoice
         ▼
@@ -155,7 +155,7 @@ Not different models/bots — parameters of a single persona that control **yiel
 
 | Parameter | Level 1 | Level 2 | Level 3 | Level 4 |
 |-----------|---------|---------|---------|---------|
-| Number of objections | minimum | several | many | very many |
+| Number of objections | minimal | several | many | very many |
 | Meeting-agreement threshold | low | moderate | high | very high |
 | Initial trust | high | moderate | low | nearly none |
 | Behavior | friendly | cautious | skeptical | active resistance |
@@ -178,8 +178,9 @@ objections and needs weigh more).
 **Honest limitations of the scoring:**
 - Without a strict rubric, scores fluctuate → output format is fixed/structured.
 - **STT accuracy → fairness:** a recognition error = skewed score.
-- **Local judge is unreliable** (weak RU). Scores in the demo are "plausible", not
-  calibrated (no gold-standard examples). Hence the candidate to move the judge to an API.
+- **Scores are not expert-calibrated** — `gpt-4o-mini` as judge is self-consistent (and
+  judges a human, not itself), but its scores are "plausible", not benchmarked against a
+  real sales trainer.
 - **The judge sees text only** — intonation/pauses/confidence are lost, yet "trust" and
   "negotiation" are partly about tone. Text-based scoring is lossy.
 
@@ -268,7 +269,7 @@ voice→dialogue→report cycle) + proposal document for the owner.
 - **Guardrail** — withstood 48 jailbreak attacks (including "you're a bot", reveal-prompt,
   unrelated tasks); after hardening: 0 breaks.
 - **Model selection** — compared 6 models; gpt-4o-mini = best balance of quality×cost×reliability.
-- **STT observability** — `stt_log` log (audio ↔ what Whisper heard, including failures)
+- **STT observability** — `stt_log` table (audio ↔ what Whisper heard, including failures)
   + HTML review (`tools/stt_review.py`) for checking recognition accuracy.
 - **Tests** — `pytest tests/` (17 logic tests). Validation research — in `research/`.
 

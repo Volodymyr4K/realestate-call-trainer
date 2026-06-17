@@ -9,7 +9,7 @@ realistische Einwände, leistet Widerstand und stimmt (manchmal) einem Termin zu
 Gespräch erstellt er einen **bewerteten Coaching-Bericht**.
 
 > Als Probeaufgabe entwickelt. Der Dialog läuft auf Russisch (Sprache des Ziel-Callcenters);
-> Oberfläche und Doku sind auf Ukrainisch/Englisch.
+> Die Bot-Oberfläche ist auf Ukrainisch; die Doku liegt auf Englisch, Ukrainisch und Deutsch vor.
 
 ## Funktionen
 
@@ -91,7 +91,7 @@ bot/        Produktcode (Telegram, STT, LLM, TTS, Persona, Analyzer, Speicher)
 tests/      Pytest-Unit-Tests
 research/    Explorationsskripte zur Validierung von Modellen, Stufen, Bewerter, Guardrail
 tools/       stt_review.py — erzeugt eine HTML-Ansicht „Audio ↔ Transkription"
-docs/        ursprüngliche Aufgabenstellung + Architektur & Entscheidungen
+docs/        Aufgabenstellung + Architektur & Entscheidungen
 ```
 
 ## Bekannte Einschränkungen

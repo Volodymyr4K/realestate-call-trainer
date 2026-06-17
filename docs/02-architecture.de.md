@@ -176,8 +176,9 @@ Einwände und Bedarf werden stärker gewichtet).
 **Ehrliche Einschränkungen der Bewertung:**
 - Ohne feste Rubrik schwanken die Punkte → Ausgabeformat ist fest/strukturiert.
 - **STT-Genauigkeit → Bewertungsgerechtigkeit:** Erkennungsfehler = verzerrte Bewertung.
-- **Lokaler Richter ist unzuverlässig** (schwaches RU). Bewertung im Demo ist «plausibel», nicht
-  kalibriert (keine Referenzbeispiele). Daher ein Kandidat, den Richter auf API auszulagern.
+- **Bewertung ist nicht experten-kalibriert** — `gpt-4o-mini` als Richter ist selbstkonsistent
+  (und bewertet einen Menschen, nicht sich selbst), aber die Bewertungen sind «plausibel», nicht
+  an einem echten Verkaufstrainer gemessen.
 - **Richter sieht nur Text** — Intonation/Pausen/Sicherheit gehen verloren, dabei sind «Vertrauen» und
   «Verhandlung» zur Hälfte Tonangelegenheit. Textbasierte Bewertung ist verlustbehaftet.
 

@@ -8,7 +8,7 @@ in voice as a reluctant owner — raising realistic objections, resisting, and (
 agreeing to a meeting. After the call it produces a **scored coaching report**.
 
 > Built as a take-home project. Dialogue is in Russian (the target call-center's language);
-> UI and docs are in Ukrainian/English.
+> the bot UI is in Ukrainian; docs are available in English, Ukrainian, and German.
 
 ## What it does
 
@@ -88,7 +88,7 @@ bot/        product code (telegram, stt, llm, tts, persona, analyzer, storage)
 tests/      pytest unit tests
 research/    exploratory scripts used to validate models, levels, judge, guardrail
 tools/       stt_review.py — generates an HTML "audio ↔ transcription" review
-docs/        original brief + architecture & decisions
+docs/        problem statement + architecture & decisions
 ```
 
 ## Known limitations
