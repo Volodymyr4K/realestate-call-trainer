@@ -4,7 +4,8 @@
 
 > This is **our** document: how we decided to build the product, why that way, and where the risks are.
 > Problem statement (paraphrased) — [01-problem-statement.md](01-problem-statement.md).
-> This document is living. Version as of 2026-06-17 (after the 2nd critical review + hardware check).
+> This document is living. Version as of 2026-06-18 (update: STT moved to Groq, demo deployed on a
+> cloud server, owner proposal produced as PDF; earlier: 2nd critical review + hardware check).
 
 ---
 
@@ -26,7 +27,7 @@ The client's spec **explicitly requests documentation**, not just a bot. Therefo
 2. **A working demo-bot** — a powerful bonus that proves capability.
 
 ⚠️ This file (`02-architecture.md`) is the technical document, for US. The clean version for the
-owner is assembled separately (phases 3–4) — do not confuse them.
+owner is now produced separately: [`03-proposal.ru.pdf`](03-proposal.ru.pdf) (Russian) — do not confuse them.
 
 ---
 
@@ -103,7 +104,7 @@ Agent (Telegram)
         │ audio → ffmpeg decodes
         ▼
   ┌─────────────────────────┐
-  │  STT  (faster-whisper)  │   voice → text
+  │  STT (Groq Whisper API) │   voice → text
   └─────────────────────────┘
         │ agent's text
         ▼
@@ -134,7 +135,7 @@ Agent (Telegram)
 | Layer | MVP / demo (our choice) | Production / quality |
 |-------|-------------------------|----------------------|
 | Bot | `aiogram` (Python 3.12) | same |
-| STT | `faster-whisper`, `small`/`medium` (local) | Whisper API / Deepgram |
+| STT | **Groq Whisper API** (cloud, ~1 s), `faster-whisper` (local) as fallback | Groq / Deepgram (higher limits) |
 | Dialogue LLM | **`openai/gpt-4o-mini` via OpenRouter** — selected by comparing 6 models (quality×cost×reliability, $1/1000 conversations). Provider SWAPPABLE | any model on OpenRouter (Claude/Gemini/…) |
 | Judge (scoring) | same gpt-4o-mini (judges the HUMAN, not itself) | stronger model if needed |
 | TTS | `Silero` (free, CPU) → conversion to OGG/OPUS via ffmpeg | ElevenLabs / OpenAI TTS |
@@ -143,7 +144,9 @@ Agent (Telegram)
 
 **Path:** started locally (Ollama, qwen/llama — zero cost), but local 8B models contradicted
 themselves on hard levels → switched to **OpenRouter / gpt-4o-mini**. The swap cost **one file**
-(`bot/llm.py`) — proof that the provider layer is genuinely swappable.
+(`bot/llm.py`) — proof that the provider layer is genuinely swappable. Later, STT was likewise
+moved from local `faster-whisper` to **Groq** — again a single file (`bot/stt.py`), with a local
+fallback if no Groq key is set.
 **Principle:** STT / LLM / TTS — behind abstractions; the provider is replaced in one place,
 no rewriting needed.
 
@@ -202,11 +205,17 @@ Report → SQLite.
 |------|--------|
 | Python | **3.12.13** ✅ (was 3.9.6) |
 | ffmpeg | **8.1.1** ✅ (installed) |
-| STT/TTS | local (`faster-whisper`, `Silero`) — loaded at bot startup |
+| STT | **Groq Whisper API** (cloud, `GROQ_API_KEY`) — no local model needed; fallback: `faster-whisper` |
+| TTS | `Silero` (local) — loaded at bot startup |
 | LLM | **OpenRouter `gpt-4o-mini`** (key `OPENROUTER_API_KEY` in `.env`) — not local, no machine load |
 
 Setup: `cp .env.example .env`, fill in `BOT_TOKEN` (from @BotFather) and
-`OPENROUTER_API_KEY` (from openrouter.ai). Launch: `.venv/bin/python -m bot.main`.
+`OPENROUTER_API_KEY` (from openrouter.ai), optionally `GROQ_API_KEY` (from console.groq.com) for
+fast cloud STT. Launch: `.venv/bin/python -m bot.main`.
+
+**Deployment (demo):** the bot runs as a single long-polling process on a small cloud server
+(Ubuntu VPS) via `systemd` — no developer machine needs to stay on. Since speech recognition lives
+in the cloud (Groq), a small box is enough.
 
 ---
 
@@ -215,19 +224,21 @@ Setup: `cp .env.example .env`, fill in `BOT_TOKEN` (from @BotFather) and
 | Layer | Cost |
 |-------|------|
 | LLM (gpt-4o-mini: dialogue + scoring report) | **~$1 per 1000 conversations** (measured on live tokens) |
-| STT (faster-whisper, local) | ~0 |
+| STT (Groq Whisper API) | ~0 (free tier in the demo); a few cents in production |
 | TTS (Silero, local) | ~0 |
 
-So the demo costs **cents**. The main expense at scale — LLM (can go cheaper with mistral,
-gemini-flash). If voice is upgraded to ElevenLabs/OpenAI TTS — voiceover cost is added
-(still pennies per conversation).
+So the demo costs **cents**. In production the biggest lever is not the LLM but the **voice**:
+keep it robotic (Silero) and it stays cheap; with a natural voice (OpenAI TTS) or a premium voice
+(ElevenLabs) costs rise noticeably. The detailed production cost model (voice options × volume +
+server rent) is in the owner proposal [`03-proposal.ru.pdf`](03-proposal.ru.pdf).
 
 ---
 
 ## 13. Scaling
 
 Each conversation is independent → horizontal scaling (more workers). Bottleneck — latency/cost
-of STT/TTS/LLM. Local stack cannot handle many concurrent users (single machine) → for
+of STT/TTS/LLM. Speech recognition is already offloaded to the cloud (Groq) — one step toward
+scaling. The remaining local stack cannot handle many concurrent users (single machine) → for
 production: API + queue (Redis/Celery).
 
 ---
@@ -236,8 +247,9 @@ production: API + queue (Redis/Celery).
 
 1. **"Maximum realism" × "local/free"** — these conflict. Smaller local models struggle to
    hold character/RU. Insurance — swappable provider.
-2. **Pipeline latency** — STT(local ~1–2 s) + LLM(OpenRouter ~2–5 s) + TTS(local ~1–2 s)
-   ≈ 5–10 s/response. Acceptable for voice message exchange.
+2. **Pipeline latency** — STT(Groq ~1 s) + LLM(OpenRouter ~2–5 s) + TTS(local ~0.5–1 s)
+   ≈ 3–7 s/response. (Local STT on a weak CPU was ~10 s — hence the move to Groq.)
+   Acceptable for voice message exchange.
 3. **Dialogue realism — tuning, not code.** Not "100% done".
 4. **Scoring** depends on rubric, STT accuracy, and judge strength; from text — lossy.
 5. **Realtime** (if they want it) — complexity jump measured in weeks.
@@ -275,7 +287,8 @@ voice→dialogue→report cycle) + proposal document for the owner.
 
 ## 17. Known limitations / future work (honestly)
 
-- **Voice** — Silero sounds robotic; switching to ElevenLabs/OpenAI TTS = replacing one module.
+- **Voice** — Silero sounds robotic; for production we recommend OpenAI TTS (replacing one
+  module). Voice is the biggest cost lever in production (see the owner proposal).
 - **Score calibration** — judges are self-consistent but not benchmarked against a real trainer.
 - **Long voice messages (>20 MB)** — Telegram won't deliver them; handled safely (try/except),
   does not occur in a normal training reply.

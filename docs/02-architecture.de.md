@@ -5,7 +5,9 @@
 > Dies ist **unser** Dokument: wie wir das Produkt zu bauen beschlossen haben, warum genau so,
 > wo die Risiken liegen.
 > Aufgabenstellung (paraphrasiert) — [01-problem-statement.md](01-problem-statement.md).
-> Das Dokument ist lebendig. Version vom 2026-06-17 (nach dem 2. kritischen Review + Hardware-Prüfung).
+> Das Dokument ist lebendig. Version vom 2026-06-18 (Update: STT auf Groq umgestellt,
+> Demo auf einem Cloud-Server bereitgestellt, Eigentümer-Vorschlag als PDF erstellt;
+> zuvor: 2. kritisches Review + Hardware-Prüfung).
 
 ---
 
@@ -27,7 +29,7 @@ Der Auftraggeber fordert im Lastenheft **ausdrücklich Dokumentation**, nicht nu
 2. **Funktionierender Demo-Bot** — starker Bonus, der die Leistungsfähigkeit beweist.
 
 ⚠️ Dieses Dokument (`02-architecture.md`) ist technisch, für UNS. Die saubere Fassung für den
-Eigentümer wird separat erstellt (Phase 3–4), nicht verwechseln.
+Eigentümer ist separat erstellt: [`03-proposal.ru.pdf`](03-proposal.ru.pdf) (Russisch) — nicht verwechseln.
 
 ---
 
@@ -102,7 +104,7 @@ Mitarbeiter (Telegram)
         │ audio → ffmpeg dekodiert
         ▼
   ┌─────────────────────────┐
-  │  STT  (faster-whisper)  │   Sprache → Text
+  │  STT (Groq Whisper API) │   Sprache → Text
   └─────────────────────────┘
         │ Text des Mitarbeiters
         ▼
@@ -133,7 +135,7 @@ Mitarbeiter (Telegram)
 | Schicht | MVP / Demo (unsere Wahl) | Produktion / Qualität |
 |-----|------------------------|-------------------|
 | Bot | `aiogram` (Python 3.12) | dasselbe |
-| STT | `faster-whisper`, `small`/`medium` (lokal) | Whisper API / Deepgram |
+| STT | **Groq Whisper API** (Cloud, ~1 s), `faster-whisper` (lokal) als Fallback | Groq / Deepgram (höhere Limits) |
 | Dialog LLM | **`openai/gpt-4o-mini` über OpenRouter** — gewählt durch Vergleich von 6 Modellen (Qualität×Preis×Zuverlässigkeit, $1/1000 Gespräche). Anbieter AUSTAUSCHBAR | beliebiges Modell auf OpenRouter (Claude/Gemini/…) |
 | Richter (Bewertung) | dasselbe gpt-4o-mini (bewertet den MENSCHEN, nicht sich selbst) | stärkeres Modell bei Bedarf |
 | TTS | `Silero` (kostenlos, CPU) → Konvertierung in OGG/OPUS über ffmpeg | ElevenLabs / OpenAI TTS |
@@ -143,6 +145,8 @@ Mitarbeiter (Telegram)
 **Weg:** wir starteten lokal (Ollama, qwen/llama — null Kosten), aber lokale 8B-Modelle
 widersprachen sich bei schwierigen Graden → Wechsel zu **OpenRouter / gpt-4o-mini**. Dieser Austausch
 betraf nur **eine Datei** (`bot/llm.py`) — Beweis, dass die Anbieterschicht wirklich austauschbar ist.
+Später wurde ebenso die Spracherkennung von lokalem `faster-whisper` auf **Groq** umgestellt — wieder
+nur eine Datei (`bot/stt.py`), mit lokalem Fallback, falls kein Groq-Schlüssel gesetzt ist.
 **Prinzip:** STT / LLM / TTS — hinter einer Abstraktion, der Anbieter wird punktuell gewechselt, ohne Umschreiben.
 
 ---
@@ -199,11 +203,17 @@ Transkript (Text + Sprecher + Zeit) → SQLite. Audio → lokale Dateien (S3 in 
 |---|---|
 | Python | **3.12.13** ✅ (war 3.9.6) |
 | ffmpeg | **8.1.1** ✅ (installiert) |
-| STT/TTS | lokal (`faster-whisper`, `Silero`) — werden beim Bot-Start geladen |
+| STT | **Groq Whisper API** (Cloud, `GROQ_API_KEY`) — kein lokales Modell nötig; Fallback: `faster-whisper` |
+| TTS | `Silero` (lokal) — wird beim Bot-Start geladen |
 | LLM | **OpenRouter `gpt-4o-mini`** (Schlüssel `OPENROUTER_API_KEY` in `.env`) — nicht lokal, belastet den Rechner nicht |
 
 Einrichtung: `cp .env.example .env`, `BOT_TOKEN` (von @BotFather) und
-`OPENROUTER_API_KEY` (von openrouter.ai) eintragen. Start: `.venv/bin/python -m bot.main`.
+`OPENROUTER_API_KEY` (von openrouter.ai) eintragen, optional `GROQ_API_KEY` (von console.groq.com)
+für schnelle Cloud-STT. Start: `.venv/bin/python -m bot.main`.
+
+**Deployment (Demo):** Der Bot läuft als einzelner Long-Polling-Prozess auf einem kleinen
+Cloud-Server (Ubuntu-VPS) per `systemd` — kein eingeschalteter Entwicklerrechner nötig. Da die
+Spracherkennung in der Cloud (Groq) liegt, genügt eine kleine Maschine.
 
 ---
 
@@ -212,20 +222,23 @@ Einrichtung: `cp .env.example .env`, `BOT_TOKEN` (von @BotFather) und
 | Schicht | Kosten |
 |---|---|
 | LLM (gpt-4o-mini: Dialog + Bewertungsbericht) | **~$1 pro 1000 Gespräche** (gemessen an echten Token) |
-| STT (faster-whisper lokal) | ~0 |
+| STT (Groq Whisper API) | ~0 (Free-Tier in der Demo); im Produktivbetrieb wenige Cent |
 | TTS (Silero lokal) | ~0 |
 
-Die Demo kostet also **Cent-Beträge**. Der Hauptkostenfaktor bei großem Volumen ist das LLM (noch
-günstiger möglich — mistral, gemini-flash). Falls die Stimme auf ElevenLabs/OpenAI TTS gehoben
-wird, kommen Vertonungskosten hinzu (ebenfalls Kleinstbeträge pro Gespräch).
+Die Demo kostet also **Cent-Beträge**. Im Produktivbetrieb ist nicht das LLM der größte Hebel,
+sondern die **Stimme**: Bleibt sie roboterhaft (Silero), bleibt es günstig; mit lebendiger Stimme
+(OpenAI TTS) oder Premium-Stimme (ElevenLabs) steigen die Kosten deutlich. Das detaillierte
+Produktions-Kostenmodell (Stimmoptionen × Volumen + Servermiete) steht im Eigentümer-Vorschlag
+[`03-proposal.ru.pdf`](03-proposal.ru.pdf).
 
 ---
 
 ## 13. Skalierung
 
 Jedes Gespräch ist unabhängig → horizontal skalierbar (mehr Worker). Engpass — Latenz/Kosten
-von STT/TTS/LLM. Lokaler Stack trägt viele Nutzer nicht (eine Hardware) → für Produktion API + Queue
-(Redis/Celery).
+von STT/TTS/LLM. Die Spracherkennung ist bereits in die Cloud (Groq) ausgelagert — ein Schritt
+in Richtung Skalierung. Der restliche lokale Stack trägt viele Nutzer nicht (eine Hardware) →
+für Produktion API + Queue (Redis/Celery).
 
 ---
 
@@ -233,8 +246,9 @@ von STT/TTS/LLM. Lokaler Stack trägt viele Nutzer nicht (eine Hardware) → fü
 
 1. **«Maximaler Realismus» × «lokal/kostenlos»** — widersprechen sich. Kleine lokale Modelle
    halten Rolle/RU schlechter. Absicherung — austauschbarer Anbieter.
-2. **Pipeline-Latenz** — STT (lokal ~1–2 s) + LLM (OpenRouter ~2–5 s) + TTS (lokal ~1–2 s)
-   ≈ 5–10 s/Antwort. Für Sprachnachrichten-Austausch akzeptabel.
+2. **Pipeline-Latenz** — STT (Groq ~1 s) + LLM (OpenRouter ~2–5 s) + TTS (lokal ~0,5–1 s)
+   ≈ 3–7 s/Antwort. (Lokales STT auf schwacher CPU war ~10 s — daher der Wechsel zu Groq.)
+   Für Sprachnachrichten-Austausch akzeptabel.
 3. **Gesprächsrealismus — Tuning, kein Code.** Nicht «zu 100 % fertig».
 4. **Bewertung** hängt von Rubrik, STT-Genauigkeit und Richter-Stärke ab; aus Text — verlustbehaftet.
 5. **Echtzeit** (falls gewünscht) — Komplexitätssprung von Wochen.
@@ -272,7 +286,8 @@ Sprache→Dialog→Bericht) + Vorschlagsdokument für den Eigentümer.
 
 ## 17. Bekannte Grenzen / Zukunft (ehrlich)
 
-- **Stimme** — Silero klingt roboterhaft; Wechsel auf ElevenLabs/OpenAI TTS = Austausch eines Moduls.
+- **Stimme** — Silero klingt roboterhaft; für Produktion empfehlen wir OpenAI TTS (Austausch eines
+  Moduls). Die Stimme ist im Produktivbetrieb der größte Kostenhebel (siehe Eigentümer-Vorschlag).
 - **Bewertungskalibrierung** — Richter sind unter sich konsistent, aber nicht mit echtem Trainer abgeglichen.
 - **Lange Sprachnachrichten (>20 MB)** — Telegram liefert diese nicht aus; wird sicher behandelt (try/except),
   tritt bei normalen Trainingsrepliken nicht auf.
