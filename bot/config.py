@@ -15,6 +15,11 @@ LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-4o-mini")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
+
+# STT-провайдер: якщо заданий GROQ_API_KEY — розпізнаємо через Groq Whisper API
+# (хмара, ~1-2с, точніше за локальну small). Інакше — локальний faster-whisper.
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_STT_MODEL = os.getenv("GROQ_STT_MODEL", "whisper-large-v3-turbo")
 # BOT_LANG, а не LANG — щоб не конфліктувати з системною змінною локалі LANG
 BOT_LANG = os.getenv("BOT_LANG", "ru")
 

@@ -140,6 +140,10 @@ async def on_voice(message: Message):
     in_path = f"{RECORDINGS_DIR}/{uid}_{s['sid']}_{turn}_in.ogg"
 
     try:
+        # «записує голосове…» одразу — щоб менеджер бачив, що бот відповідає, а не завис.
+        # Реальну латентність STT/LLM/TTS це не зменшує, лише сприйняття (статус живе ~5с).
+        await message.bot.send_chat_action(message.chat.id, "record_voice")
+
         # 1. Завантажуємо голосове менеджера
         file = await message.bot.get_file(message.voice.file_id)
         await message.bot.download_file(file.file_path, in_path)
