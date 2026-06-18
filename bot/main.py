@@ -52,13 +52,13 @@ def get_active_session(uid: int) -> dict | None:
 async def cmd_help(message: Message):
     """Довідка: як користуватись тренажером."""
     await message.answer(
-        "Я — тренажер телефонних продажів нерухомості. Я граю власника квартири, ти — менеджер агентства.\n\n"
-        "Як тренуватися:\n"
-        "1. /start — обери сценарій і рівень складності\n"
-        "2. Я «беру слухавку» («Алло?») — дзвони мені голосовим, як ріелтор\n"
-        "3. Веди розмову голосовими, відпрацьовуй заперечення\n"
-        "4. /finish — завершити й отримати звіт з оцінкою\n\n"
-        "Команди: /start — почати · /finish — завершити та отримати звіт · /help — довідка"
+        "Я — тренажёр телефонных продаж недвижимости. Я играю собственника квартиры, ты — менеджер агентства.\n\n"
+        "Как тренироваться:\n"
+        "1. /start — выбери сценарий и уровень сложности\n"
+        "2. Я «беру трубку» («Алло?») — звони мне голосовым, как риелтор\n"
+        "3. Веди разговор голосовыми, отрабатывай возражения\n"
+        "4. /finish — завершить и получить отчёт с оценкой\n\n"
+        "Команды: /start — начать · /finish — завершить и получить отчёт · /help — справка"
     )
 
 
@@ -71,7 +71,7 @@ async def cmd_start(message: Message):
         for sc in SCENARIOS
     ]
     await message.answer(
-        "Тренування дзвінка. Обери сценарій — кого граємо:",
+        "Тренировка звонка. Выбери сценарий — кого играем:",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=rows),
     )
 
@@ -88,7 +88,7 @@ async def pick_scenario(cb: CallbackQuery):
                               callback_data=f"lvl:{scenario}:{i}") for i in (3, 4)],
     ])
     await cb.message.answer(
-        f"Сценарій: «{SCENARIOS[scenario]['name']}».\nОбери рівень складності:",
+        f"Сценарий: «{SCENARIOS[scenario]['name']}».\nВыбери уровень сложности:",
         reply_markup=kb,
     )
 
@@ -115,8 +115,8 @@ async def pick_level(cb: CallbackQuery):
         "audio": [],
     }
     await cb.message.answer(
-        f"Сценарій «{SCENARIOS[scenario]['name']}», рівень {level} ({LEVELS[level]['name']}).\n"
-        "Ти дзвониш — починай розмову голосовим. /finish — завершити й отримати звіт."
+        f"Сценарий «{SCENARIOS[scenario]['name']}», уровень {level} ({LEVELS[level]['name']}).\n"
+        "Ты звонишь — начинай разговор голосовым. /finish — завершить и получить отчёт."
     )
     try:
         voice = await asyncio.to_thread(tts.synthesize, GREETING, f"{uid}_{sid}_greet")
@@ -124,7 +124,7 @@ async def pick_level(cb: CallbackQuery):
         await cb.message.answer_voice(FSInputFile(voice))
     except Exception:
         logging.exception("Помилка синтезу вітання (uid=%s)", uid)
-        await cb.message.answer("(Не вдалось озвучити «Алло?», але можна починати — пиши голосовим.)")
+        await cb.message.answer("(Не удалось озвучить «Алло?», но можно начинать — пиши голосовым.)")
 
 
 @dp.message(F.voice)
@@ -133,7 +133,7 @@ async def on_voice(message: Message):
     uid = message.from_user.id
     s = get_active_session(uid)
     if s is None:
-        await message.answer("Спершу /start, щоб обрати рівень.")
+        await message.answer("Сначала /start, чтобы выбрать уровень.")
         return
     s["last_active"] = time.monotonic()
     turn = s["turn"] + 1
@@ -148,7 +148,7 @@ async def on_voice(message: Message):
         text = await asyncio.to_thread(stt.transcribe, in_path)
         await asyncio.to_thread(storage.log_stt, uid, s["sid"], turn, in_path, text, bool(text))
         if not text:
-            await message.answer("Не розчув. Спробуй ще раз.")
+            await message.answer("Не расслышал. Попробуй ещё раз.")
             return
 
         # 3. LLM (відповідь власника). Працюємо з копією історії —
@@ -161,7 +161,7 @@ async def on_voice(message: Message):
         await message.answer_voice(FSInputFile(voice))
     except Exception:
         logging.exception("Помилка обробки голосового (uid=%s, turn=%s)", uid, turn)
-        await message.answer("Ой, щось зламалось на моєму боці. Спробуй ще раз.")
+        await message.answer("Ой, что-то сломалось на моей стороне. Попробуй ещё раз.")
         return
 
     # Успіх: фіксуємо історію, транскрипт, аудіо й лічильник (паралельно транскрипту)
@@ -180,7 +180,7 @@ async def cmd_finish(message: Message):
     uid = message.from_user.id
     s = get_active_session(uid)
     if s is None:
-        await message.answer("Активної розмови немає. /start щоб почати.")
+        await message.answer("Активного разговора нет. /start чтобы начать.")
         return
     if s["turn"] == 0:
         del sessions[uid]
@@ -218,16 +218,16 @@ async def cmd_finish(message: Message):
 @dp.message()
 async def fallback(message: Message):
     """Усе, що не команда й не голосове — підказуємо що робити."""
-    await message.answer("Не зрозумів. Надішли голосове повідомлення або /help.")
+    await message.answer("Не понял. Пришли голосовое сообщение или /help.")
 
 
 async def main():
     storage.init_db()
     bot = Bot(require_bot_token())
     await bot.set_my_commands([
-        BotCommand(command="start", description="Почати тренування"),
-        BotCommand(command="finish", description="Завершити та отримати звіт"),
-        BotCommand(command="help", description="Довідка"),
+        BotCommand(command="start", description="Начать тренировку"),
+        BotCommand(command="finish", description="Завершить и получить отчёт"),
+        BotCommand(command="help", description="Справка"),
     ])
     logging.info("Бот запущено. Очікую повідомлення...")
     await dp.start_polling(bot)
