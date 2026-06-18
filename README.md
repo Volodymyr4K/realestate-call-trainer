@@ -7,8 +7,8 @@ practice real-estate cold calls. The agent calls in with voice messages; the bot
 in voice as a reluctant owner — raising realistic objections, resisting, and (sometimes)
 agreeing to a meeting. After the call it produces a **scored coaching report**.
 
-> Built as a take-home project. Dialogue is in Russian (the target call-center's language);
-> the bot UI is in Ukrainian; docs are available in English, Ukrainian, and German.
+> Built as a take-home project. Dialogue and the bot UI are in Russian (the target
+> call-center's language); docs are available in English, Ukrainian, and German.
 
 ## What it does
 
@@ -28,32 +28,35 @@ agreeing to a meeting. After the call it produces a **scored coaching report**.
 ## How it works
 
 ```
-Agent (Telegram voice) ──► STT (faster-whisper) ──► LLM dialogue (gpt-4o-mini)
-                                                          │  persona = scenario × level
-       Telegram voice ◄── TTS (Silero → OGG/Opus) ◄──────┘
+Agent (Telegram voice) ──► STT (Groq Whisper API) ──► LLM dialogue (gpt-4o-mini)
+                                                      │  persona = scenario × level
+       Telegram voice ◄── TTS (Silero → OGG/Opus) ◄───┘
    on /finish: full transcript ──► LLM judge ──► scored report
 ```
 
 Flow: `/start` → pick scenario → pick level → bot says *"Алло?"* → talk via voice →
-`/finish` → get the report.
+`/finish` → get the report. End-to-end response time: **~3–7 s**.
 
 ## Tech stack
 
 | Layer | Choice | Why |
 |-------|--------|-----|
 | Bot | `aiogram` (Python 3.12) | async Telegram framework |
-| STT | `faster-whisper` (local) | fast on CPU, no per-call cost |
+| STT | **Groq Whisper API** (cloud), local `faster-whisper` as fallback | ~1 s and more accurate; ~10 s locally on a weak CPU |
 | Dialogue + scoring LLM | `openai/gpt-4o-mini` via **OpenRouter** | chosen by comparing 6 models on quality × cost × reliability (~$1 / 1000 conversations) |
-| TTS | `Silero` (local) → `ffmpeg` to OGG/Opus | free; swappable for ElevenLabs/OpenAI TTS |
+| TTS | `Silero` (local) → `ffmpeg` to OGG/Opus | free; swappable for OpenAI TTS / ElevenLabs in production |
 | Storage | SQLite + local audio files | zero-setup for a demo |
 
 Every external provider (STT / LLM / TTS) sits behind a thin module, so swapping it is a
-one-file change — proven during development by moving the LLM from local Ollama to OpenRouter.
+one-file change — proven by two swaps: the LLM from local Ollama to OpenRouter, and STT
+from local faster-whisper to Groq.
 
 ## Setup
 
 **Prerequisites:** Python 3.12, `ffmpeg`, a Telegram bot token ([@BotFather](https://t.me/BotFather)),
-and an [OpenRouter](https://openrouter.ai/keys) API key.
+and an [OpenRouter](https://openrouter.ai/keys) API key. Optionally a
+[Groq](https://console.groq.com/keys) API key for fast cloud speech recognition — without it,
+STT runs locally via `faster-whisper`.
 
 ```bash
 # 1. ffmpeg (macOS)
@@ -65,13 +68,20 @@ python3.12 -m venv .venv
 
 # 3. configure
 cp .env.example .env
-#   then fill in BOT_TOKEN and OPENROUTER_API_KEY
+#   then fill in BOT_TOKEN and OPENROUTER_API_KEY (GROQ_API_KEY optional)
 
 # 4. run
 .venv/bin/python -m bot.main
 ```
 
-First run downloads the Whisper and Silero models (cached afterwards).
+First run downloads the Silero TTS model and — without a Groq key — the local Whisper model
+too (cached afterwards).
+
+## Deployment
+
+The bot runs as a single long-polling process and can be hosted on a small VPS via `systemd` —
+no developer machine needs to stay on. Because speech recognition is offloaded to the cloud
+(Groq), a lean box is enough; only the local TTS (Silero) needs meaningful RAM.
 
 ## Tests
 
@@ -93,11 +103,13 @@ docs/        problem statement + architecture & decisions
 
 ## Known limitations
 
-- **Robotic voice** — Silero is a free placeholder; ElevenLabs/OpenAI TTS is a one-module swap.
+- **Robotic voice** — Silero is a free placeholder; OpenAI TTS is the recommended production
+  swap (one module). Voice is the biggest cost lever — see the architecture doc.
 - **Scores are consistent but not expert-calibrated** — useful for training feedback, not a
   certified assessment.
-- **Single process** — concurrent users are serialized; production would use a worker pool + queue.
-- **Recordings are kept indefinitely** (by design, for archival) — production needs a retention policy.
+- **Single process** — concurrent users are serialized; production would use a worker pool and a queue.
+- **Recordings are kept indefinitely** (by design, for archiving) — production needs consent and
+  a retention policy (GDPR).
 
 See [`docs/02-architecture.en.md`](docs/02-architecture.en.md) for the full design, decisions,
 cost, scaling, and validation results.
